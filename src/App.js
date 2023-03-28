@@ -9,6 +9,10 @@ function App() {
   const [account, setAccount] = useState("");
   const [ethBalance, setEthBalance] = useState("");
   const [uStakingBalance, setUStakingBalance] = useState("");
+  const [receiver, setReceiver] = useState("");
+  const [amount, setAmount] = useState("");
+  const [connected, setConnected] = useState(false);
+
 
   useEffect(() => {
     async function connectWeb3() {
@@ -54,13 +58,60 @@ function App() {
     getUStakingBalance();
   }, [web3, account]);
 
+  async function handleSendTokens(event) {
+    event.preventDefault();
+    if (!web3 || !receiver || !amount) {
+      return;
+    }
+    const uStaking = new web3.eth.Contract(uStakingABI, uStakingAddress);
+    const amountInWei = web3.utils.toWei(amount, 'ether');
+    try {
+      await uStaking.methods.transfer(receiver, amountInWei).send({ from: account });
+      setAmount("");
+      setReceiver("");
+      // refresh the uStaking balance after the transaction
+      getUStakingBalance();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   return (
     <div>
-      <h1>Wallet Address: {account}</h1>
-      <h2>ETH Balance: {ethBalance}</h2>
+      <a class="logo"> uRemittance</a>
+     <div class="bal"> <a class="balance">Wallet Address: {account}</a>
+      <a class="balance">ETH Balance: {ethBalance}</a>
+      </div>
+      <div class="form">
       <h2>uStaking Balance: {uStakingBalance}</h2>
+      <form onSubmit={handleSendTokens}>
+        <label>
+          Receiver's Address:
+          <input
+            type="text"
+            value={receiver}
+            onChange={(event) => setReceiver(event.target.value)}
+          />
+        </label>
+        <br />
+        <label>
+          Amount:
+          <input
+            type="text"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+          />
+        </label>
+        <br />
+        <button type="submit">Send Tokens</button>
+      </form>
+      </div>
+      <footer>
+       <p>uStaking by Travis</p>
+      </footer>
     </div>
   );
+
 }
 
-export default App;
+  export default App;
